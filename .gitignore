@@ -1,0 +1,8 @@
+audios
+logs
+__pycache__
+.*.swp
+
+build
+*.c
+monotonic_align/monotonic_align
