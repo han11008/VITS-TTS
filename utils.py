@@ -11,7 +11,7 @@ import torch
 
 MATPLOTLIB_FLAG = False
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging
 
 
@@ -71,7 +71,17 @@ def latest_checkpoint_path(dir_path, regex="G_*.pth"):
   f_list = glob.glob(os.path.join(dir_path, regex))
   f_list.sort(key=lambda f: int("".join(filter(str.isdigit, f))))
   x = f_list[-1]
-  print(x)
+  print(f'latest checkpoint: {x}')
+  return x
+
+
+def earliest_checkpoint_path(dir_path, regex="G_*.pth", preserved=5):
+  f_list = glob.glob(os.path.join(dir_path, regex))
+  if len(f_list) <= preserved:
+    return ''
+  f_list.sort(key=lambda f: int("".join(filter(str.isdigit, f))))
+  x = f_list[0]
+  print(f'earliest checkpoint: {x}')
   return x
 
 
@@ -82,7 +92,7 @@ def plot_spectrogram_to_numpy(spectrogram):
     matplotlib.use("Agg")
     MATPLOTLIB_FLAG = True
     mpl_logger = logging.getLogger('matplotlib')
-    mpl_logger.setLevel(logging.WARNING)
+    mpl_logger.setLevel(logging.ERROR)
   import matplotlib.pylab as plt
   import numpy as np
   
@@ -108,7 +118,7 @@ def plot_alignment_to_numpy(alignment, info=None):
     matplotlib.use("Agg")
     MATPLOTLIB_FLAG = True
     mpl_logger = logging.getLogger('matplotlib')
-    mpl_logger.setLevel(logging.WARNING)
+    mpl_logger.setLevel(logging.ERROR)
   import matplotlib.pylab as plt
   import numpy as np
 
@@ -140,12 +150,11 @@ def load_filepaths_and_text(filename, split="|"):
     filepaths_and_text = [line.strip().split(split) for line in f]
   return filepaths_and_text
 
-
 def get_hparams(init=True):
   parser = argparse.ArgumentParser()
-  parser.add_argument('-c', '--config', type=str, default="./configs/base.json",
+  parser.add_argument('-c', '--config', type=str, default='configs/modified.json',
                       help='JSON file for configuration')
-  parser.add_argument('-m', '--model', type=str, required=True,
+  parser.add_argument('-m', '--model', type=str, default='',
                       help='Model name')
   
   args = parser.parse_args()
@@ -214,13 +223,13 @@ def check_git_hash(model_dir):
 def get_logger(model_dir, filename="train.log"):
   global logger
   logger = logging.getLogger(os.path.basename(model_dir))
-  logger.setLevel(logging.DEBUG)
+  logger.setLevel(logging.INFO)
   
   formatter = logging.Formatter("%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s")
   if not os.path.exists(model_dir):
     os.makedirs(model_dir)
   h = logging.FileHandler(os.path.join(model_dir, filename))
-  h.setLevel(logging.DEBUG)
+  h.setLevel(logging.INFO)
   h.setFormatter(formatter)
   logger.addHandler(h)
   return logger
