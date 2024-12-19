@@ -19,27 +19,6 @@ def get_text(text, hps):
   text_norm = LongTensor(text_norm)
   return text_norm
 
-def language_annotation(text):
-  annotated = ''
-  for ch in text:
-    if re.search(r'[\u4e00-\u9fff]', ch):
-      if annotated.endswith('[ZH]'):
-        annotated = f'{annotated[:-4]}{ch}[ZH]'
-      else:
-        annotated = f'{annotated}[ZH]{ch}[ZH]'
-    elif re.search(r'[a-zA-Z]', ch):
-      if annotated.endswith('[EN]'):
-        annotated = f'{annotated[:-4]}{ch}[EN]'
-      else:
-        annotated = f'{annotated}[EN]{ch}[EN]'
-    else:
-      if annotated.endswith(']'):
-        lang = annotated[-4:]
-        annotated = f'{annotated[:-4]}{ch}{lang}'
-      else:
-        annotated = f'{annotated}{ch}'
-  return annotated
-
 def inference(text):
   config_path = 'logs/config.json'
   try:
@@ -58,7 +37,7 @@ def inference(text):
   _ = net_g.eval()
   _ = utils.load_checkpoint(model_path, net_g, None)
 
-  stn_tst = get_text(language_annotation(text), hps)
+  stn_tst = get_text(text, hps)
   with torch.no_grad():
     x_tst = stn_tst.cuda().unsqueeze(0)
     x_tst_lengths = torch.LongTensor([stn_tst.size(0)]).cuda()

@@ -24,6 +24,8 @@ os.environ['HF_HOME'] = os.environ['HOME'] + '/hf_home'
 from g2pw import G2PWConverter
 zh_converter = G2PWConverter()
 
+EN_MASK = 'X'
+EN_PRESERVE = []
 
 # Regular expression matching whitespace:
 _whitespace_re = re.compile(r'\s+')
@@ -97,12 +99,23 @@ def english_cleaners(text):
   return phonemes
 
 
+def search_en(match):
+  global EN_MASK, EN_PRESERVE
+  EN_PRESERVE.append(match.group(0))
+  return EN_MASK
+
+def place_back_en(match):
+  global EN_PRESERVE
+  text = EN_PRESERVE.pop(0)
+  return f' {english_cleaners(text)} '
+
 def zh_en_cleaners(text):
+  global EN_MASK, EN_PRESERVE
+  EN_PRESERVE = []
   text = mandarin_punct_modify(text)
-  text = re.sub(r'\[ZH\](.*?)\[ZH\]',
-    lambda x: mandarin_cleaners(x.group(1))+' ', text)
-  text = re.sub(r'\[EN\](.*?)\[EN\]',
-    lambda x: english_cleaners(x.group(1))+' ', text)
+  text = re.sub(r'[a-zA-Z]+[^\u4e00-\u9fff]*', search_en, text)
+  text = mandarin_cleaners(text)
+  text = re.sub(EN_MASK, place_back_en, text)
   return text.strip()
 
 
